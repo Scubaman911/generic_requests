@@ -7,8 +7,10 @@ class GQLRequest:
     url: str
     query: str
     variables: dict = {}
+    response: requests.Response = None
 
-    def send(self):
+    def populate_response(self):
+        """ Populate the GQLRequest's '.response' attribute."""
         response = requests.post(
             url=self.url, 
             json={
@@ -16,7 +18,22 @@ class GQLRequest:
                 "variables": self.variables
                 }
             )
-        return response
+        self.response = response
+
+    def is_response_ok(self):
+        """Check for common response issues.
+
+        Returns:
+            bool: good is true, bad is false.
+        """
+        if not self.response.ok:
+            return False
+        
+        if self.response.get("errors"):
+            print("some errors!")
+            return False
+        
+        return True
 
 
 query_url_map = {
@@ -27,6 +44,6 @@ query_map = {
     "getUser": get_user_by_id
 }
 
-def build_request(query_name, **kwargs):
+def build_gql_request(query_name, **kwargs):
     request = GQLRequest(url=query_url_map[query_name], query=query_map[query_name], variables=kwargs)
     return request
